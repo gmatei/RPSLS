@@ -16,10 +16,17 @@ except socket.error as e:
 # Communication with the server
 Response = ClientSocket.recv(1024)
 print(Response.decode('utf-8'))
-while True:
-    Input = input('Say Something: ')
+playAgain = True
+while playAgain:
+    Input = input('Choose rock / paper / scissors / lizard / spock: ')
     ClientSocket.send(str.encode(Input))
+    
     Response = ClientSocket.recv(1024)
     print(Response.decode('utf-8'))
+    
+    Input = input('Would you like to play again? (y/n) ')
+    if Input == "n":
+        playAgain = False
+        print("Thank you for playing!")
 
 ClientSocket.close()
