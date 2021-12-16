@@ -22,7 +22,7 @@ choices_list = ["rock", "paper", "scissors", "lizard", "spock"]
 
 
 def get_winner(player_choice):
-    opponent_choice = random.randint(0,4)
+    opponent_choice = choices_list[random.randint(0,4)]
 
     if player_choice == "rock" and (opponent_choice == "scissors" or opponent_choice == "lizard"):
         return True, opponent_choice
@@ -47,13 +47,17 @@ def threaded_client(connection):
     while True:
         data = connection.recv(2048)
 
-        winner, opponent = get_winner(data.decode('utf-8'))   # return True if human player won, False otherwise and opponent's choice
+        winner, opponent_choice = get_winner(data.decode('utf-8'))   # return True if human player won, False otherwise and opponent's choice
+        reply = "Your opponent chose " + opponent_choice
         if winner == True: 
             player_score += 1
+            reply += ". You won! "
         else:
             opponent_score +=1
+            reply += ". You lost! "
 
-        reply = (data.decode('utf-8'))
+        reply += "Current score: You - " + str(player_score) + " Opponent - " + str(opponent_score)
+
         connection.sendall(str.encode(reply))
 
         data = connection.recv(2048)
