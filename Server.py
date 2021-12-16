@@ -1,5 +1,4 @@
 import socket
-import os
 from threading import *
 import threading
 from time import sleep
@@ -14,13 +13,15 @@ try:
 except socket.error as e:
     print(str(e))
 
-print('Waiting for a Connection..')
+print('Waiting for a Connection...')
 ServerSocket.listen(5)
+ServerSocket.settimeout(0.5)
+
 
 ThreadID = 0
 choices_list = ["rock", "paper", "scissors", "lizard", "spock"]
 
-
+# Generate opponent choice and return winner (True - player / False - opponent)
 def get_winner(player_choice):
     opponent_choice = choices_list[random.randint(0,4)]
 
@@ -37,7 +38,6 @@ def get_winner(player_choice):
     else:
         return False, opponent_choice
 
-
 #Thread use for communication with each client
 def threaded_client(connection):
     connection.send(str.encode('Welcome to the RPSLS Game!'))
@@ -47,7 +47,7 @@ def threaded_client(connection):
     while True:
         data = connection.recv(2048)
 
-        winner, opponent_choice = get_winner(data.decode('utf-8'))   # return True if human player won, False otherwise and opponent's choice
+        winner, opponent_choice = get_winner(data.decode('utf-8'))
         reply = "Your opponent chose " + opponent_choice
         if winner == True: 
             player_score += 1
@@ -67,17 +67,23 @@ def threaded_client(connection):
     connection.close()
 
 #Used for accepting client connections
-while True:
-    if(threading.active_count() <= 3):
-        Client, address = ServerSocket.accept()     #Accept new client
-        print('Connected to: ' + address[0] + ':' + str(address[1]))
-        
-        thread = Thread(target = threaded_client, args = (Client, )) #Start new thread for client
-        thread.start()
+try:
+    while True:
+        if(threading.active_count() <= 3):
+            try:
+                Client, address = ServerSocket.accept()     #Accept new client
+                print('Connected to: ' + address[0] + ':' + str(address[1]))
+                
+                thread = Thread(target = threaded_client, args = (Client, )) #Start new thread for client
+                thread.daemon = True
+                thread.start()
 
-        #start_new_thread(threaded_client, (Client, ))   #Start new thread for client
-        ThreadID += 1
-        print('Thread Number: ' + str(ThreadID))
+                ThreadID += 1
+                print('Thread Number: ' + str(ThreadID))
+            except socket.timeout:
+                pass
+except KeyboardInterrupt:
+    print("Server closed!")
 
-#Close the server when?
+#Close the server
 ServerSocket.close()
