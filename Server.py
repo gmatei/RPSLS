@@ -39,7 +39,7 @@ def get_winner(player_choice):
         return False, opponent_choice
 
 #Thread use for communication with each client
-def threaded_client(connection):
+def threaded_client(connection, address):
     connection.send(str.encode('Welcome to the RPSLS Game!'))
     
     player_score = 0
@@ -49,16 +49,23 @@ def threaded_client(connection):
 
         winner, opponent_choice = get_winner(data.decode('utf-8'))
         reply = "Your opponent chose " + opponent_choice
+        server_log = "Server played against " + str(address) + ". Server chose " + opponent_choice + ". Player chose " + data.decode('utf-8')
+
         if winner == True: 
             player_score += 1
             reply += ". You won! "
+            server_log += ". Player won! "
         else:
             opponent_score +=1
             reply += ". You lost! "
+            server_log += ". Server won! "
 
         reply += "Current score: You - " + str(player_score) + " Opponent - " + str(opponent_score)
+        server_log += "Current score: Player - " + str(player_score) + " Server - " + str(opponent_score)
 
         connection.sendall(str.encode(reply))
+
+        print(server_log)
 
         data = connection.recv(2048)
         if data.decode('utf-8') == "n":
@@ -74,7 +81,7 @@ try:
                 Client, address = ServerSocket.accept()     #Accept new client
                 print('Connected to: ' + address[0] + ':' + str(address[1]))
                 
-                thread = Thread(target = threaded_client, args = (Client, )) #Start new thread for client
+                thread = Thread(target = threaded_client, args = (Client, address)) #Start new thread for client
                 thread.daemon = True
                 thread.start()
 
